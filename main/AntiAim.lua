@@ -2,6 +2,10 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 
 return function(Config, AntiAimConnection, Window)
+    print("Tworzenie zakładki Anti-Aim...")
+    local AntiAimTab = Window:CreateTab("🛡️ Anti-Aim", nil)
+    print("Zakładka Anti-Aim utworzona: ", AntiAimTab)
+
     local function StartAntiAim()
         if AntiAimConnection then
             AntiAimConnection:Disconnect()
@@ -15,15 +19,13 @@ return function(Config, AntiAimConnection, Window)
                 if Root then
                     Root.CFrame = Root.CFrame * CFrame.Angles(
                         math.rad(Config.AntiAim.Pitch),
-                        math.rad(Config.AniAim.Yaw),
+                        math.rad(Config.AntiAim.Yaw), -- Poprawione z Config.AniAim.Yaw
                         math.rad(Config.AntiAim.Roll)
                     )
                 end
             end
         end)
     end
-
-    local AntiAimTab = Window:CreateTab("🛡️ Anti-Aim", nil)
 
     AntiAimTab:CreateToggle({
         Name = "Enable Anti-Aim",
