@@ -103,15 +103,22 @@ function ESPModule.UpdateCham(Part, Cham)
         Cham.Quad3.PointC = Vector2.new(PosBottomRight3.X, PosBottomRight3.Y)
         Cham.Quad3.PointD = Vector2.new(PosTopRight3.X, PosTopRight3.Y)
 
-        -- Quad 4 - Bottom
-        local PosTopLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, PartSize.Z).Position)
-        local PosTopRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, PartSize.Z).Position)
-        local PosBottomLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-        local PosBottomRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-        Cham.Quad4.PointA = Vector2.new(PosTopLeft4.X, PosTopLeft4.Y)
-        Cham.Quad4.PointB = Vector2.new(PosBottomLeft4.X, PosBottomLeft4.Y)
-        Cham.Quad4.PointC = Vector2.new(PosBottomRight4.X, PosBottomRight4.Y)
-        Cham.Quad4.PointD = Vector2.new(PosTopRight4.X, PosTopRight4.Y)
+-- Quad 4 - Bottom
+local PosTopLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, PartSize.Z).Position)
+local PosTopRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, PartSize.Z).Position)
+local PosBottomLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, -PartSize.Z).Position)
+local PosBottomRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, -PartSize.Z).Position)
+
+if PosTopLeft4 and PosTopRight4 and PosBottomLeft4 and PosBottomRight4 then
+    Cham.Quad4.PointA = Vector2.new(PosTopLeft4.X, PosTopLeft4.Y)
+    Cham.Quad4.PointB = Vector2.new(PosBottomLeft4.X, PosBottomLeft4.Y)
+    Cham.Quad4.PointC = Vector2.new(PosBottomRight4.X, PosBottomRight4.Y)
+    Cham.Quad4.PointD = Vector2.new(PosTopRight4.X, PosTopRight4.Y)
+else
+    for i = 1, 6 do
+        Cham["Quad"..tostring(i)].Visible = false
+    end
+end
 
         -- Quad 5 - Right
         local PosTopLeft5 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, PartSize.Y, PartSize.Z).Position)
