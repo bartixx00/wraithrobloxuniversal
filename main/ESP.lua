@@ -363,7 +363,7 @@ function ESPModule.CreateESP(Player)
                 PlayerTable.HeadDot.Visible = false
             end
 
-            -- HealthBar
+-- HealthBar
 if ESPModule.Config.ESP.HealthBar.Enabled then
     local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position)
     local LeftPosition = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
