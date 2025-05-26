@@ -5,7 +5,7 @@ local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 
-return function(Config, CurrentTarget, AimConnection, SilentAimTarget, FOVCircle, Utils)
+return function(Config, CurrentTarget, AimConnection, SilentAimTarget, FOVCircle, Utils, Window)
     local function AimAt(Player)
         if not Player or not Utils.IsAlive(Player) then return end
         
