@@ -1,60 +1,71 @@
 local Players = game:GetService("Players")
-local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local function IsAlive(player)
-    return player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0
-end
+return {
+    IsAlive = function(Player)
+        return Player and Player.Character and Player.Character:FindFirstChildOfClass("Humanoid") and Player.Character:FindFirstChildOfClass("Humanoid").Health > 0
+    end,
+    
+    CanSeePlayer = function(Player, Config)
+        if not Player or not Player.Character then return false end
+        local TargetPart = Player.Character:FindFirstChild(Config.AimBot.CurrentBone)
+        if not TargetPart then
+            TargetPart = Player.Character:FindFirstChild("HumanoidRootPart")
+        end
+        if not TargetPart then return false end
 
-local function GetClosestPlayer(Config)
-    local ClosestDistance = math.huge
-    local ClosestPlayer = nil
-    local ScreenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local RayOrigin = Camera.CFrame.Position
+        local RayDirection = (TargetPart.Position - RayOrigin).Unit * 1000
+        local RaycastParams = RaycastParams.new()
+        RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character, Player.Character}
+        RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+        local Result = workspace:Raycast(RayOrigin, RayDirection, RaycastParams)
 
-    for _, Player in pairs(Players:GetPlayers()) do
-        if Player ~= LocalPlayer and IsAlive(Player) then
-            if Config.AimBot.TeamCheck and Player.Team and LocalPlayer.Team and Player.Team == LocalPlayer.Team then
-                continue
+        if Result and Result.Instance then
+            local HitPart = Result.Instance
+            if HitPart:IsDescendantOf(Player.Character) then
+                return true
             end
+        end
+        return false
+    end,
+    
+    GetClosestPlayer = function(Config)
+        local ClosestPlayer = nil
+        local ClosestDistance = Config.AimBot.FOV
+        local MousePos = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
-            local Character = Player.Character
-            local TargetPart = Character:FindFirstChild(Config.AimBot.CurrentBone)
+        for _, Player in pairs(Players:GetPlayers()) do
+            if Player == LocalPlayer then continue end
+            if not Player.Character then continue end
+            if not Utils.IsAlive(Player) then continue end
+
+            if Config.AimBot.TeamCheck and Player.TeamColor == LocalPlayer.TeamColor then continue end
+
+            local TargetPart = Player.Character:FindFirstChild(Config.AimBot.CurrentBone)
             if not TargetPart then
-                TargetPart = Character:FindFirstChild("HumanoidRootPart")
+                TargetPart = Player.Character:FindFirstChild("HumanoidRootPart")
             end
+            if not TargetPart then continue end
 
-            if TargetPart then
-                local Vector, OnScreen = Camera:WorldToViewportPoint(TargetPart.Position)
-                if OnScreen then
-                    local Distance = (Vector2.new(Vector.X, Vector.Y) - ScreenCenter).Magnitude
-                    if Distance < Config.AimBot.FOV and Distance < ClosestDistance then
-                        if Config.AimBot.WallCheck then
-                            local RaycastParams = RaycastParams.new()
-                            RaycastParams.FilterType = Enum.RaycastFilterType.Blacklist 
-                            RaycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-                            
-                            local Direction = (TargetPart.Position - Camera.CFrame.Position).Unit
-                            local Distance3D = (TargetPart.Position - Camera.CFrame.Position).Magnitude
-                            
-                            local RaycastResult = workspace:Raycast(Camera.CFrame.Position, Direction * Distance3D, RaycastParams)
-                            
-                            if not RaycastResult or RaycastResult.Instance:IsDescendantOf(Character) then
-                                ClosestDistance = Distance
-                                ClosestPlayer = Player
-                            end
-                        else
-                            ClosestDistance = Distance
-                            ClosestPlayer = Player
-                        end
+            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(TargetPart.Position)
+            if not OnScreen then continue end
+
+            local Distance = (MousePos - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
+            if Distance < ClosestDistance then
+                if Config.AimBot.WallCheck then
+                    if Utils.CanSeePlayer(Player, Config) then
+                        ClosestDistance = Distance
+                        ClosestPlayer = Player
                     end
+                else
+                    ClosestDistance = Distance
+                    ClosestPlayer = Player
                 end
             end
         end
-    end
-    return ClosestPlayer
-end
 
-return {
-    IsAlive = IsAlive,
-    GetClosestPlayer = GetClosestPlayer
+        return ClosestPlayer
+    end
 }
