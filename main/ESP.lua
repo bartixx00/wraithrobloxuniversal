@@ -62,15 +62,27 @@ function ESPModule.InitChecks(Player)
 end
 
 function ESPModule.UpdateCham(Part, Cham)
+    if not Part or not ESPModule.Camera then
+        warn("Part or Camera is nil in UpdateCham!")
+        for i = 1, 6 do
+            if Cham["Quad"..tostring(i)] then
+                Cham["Quad"..tostring(i)].Visible = false
+            end
+        end
+        return
+    end
+
     local CorFrame, PartSize = Part.CFrame, Part.Size / 2
     if select(2, ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X / 2, PartSize.Y / 2, PartSize.Z / 2).Position)) and ESPModule.Config.ESP.Chams.Enabled then
         for i = 1, 6 do
             local Quad = Cham["Quad"..tostring(i)]
-            Quad.Transparency = ESPModule.Config.ESP.Chams.Transparency
-            Quad.Color = ESPModule.Config.ESP.Chams.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.ESP.Chams.Color
-            Quad.Thickness = ESPModule.Config.ESP.Chams.Thickness
-            Quad.Filled = ESPModule.Config.ESP.Chams.Filled
-            Quad.Visible = ESPModule.Config.ESP.Chams.Enabled
+            if Quad then
+                Quad.Transparency = ESPModule.Config.ESP.Chams.Transparency
+                Quad.Color = ESPModule.Config.ESP.Chams.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.ESP.Chams.Color
+                Quad.Thickness = ESPModule.Config.ESP.Chams.Thickness
+                Quad.Filled = ESPModule.Config.ESP.Chams.Filled
+                Quad.Visible = ESPModule.Config.ESP.Chams.Enabled
+            end
         end
 
         -- Quad 1 - Front
@@ -78,70 +90,83 @@ function ESPModule.UpdateCham(Part, Cham)
         local PosTopRight = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, PartSize.Y, PartSize.Z).Position)
         local PosBottomLeft = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, PartSize.Z).Position)
         local PosBottomRight = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, PartSize.Z).Position)
-        Cham.Quad1.PointA = Vector2.new(PosTopLeft.X, PosTopLeft.Y)
-        Cham.Quad1.PointB = Vector2.new(PosBottomLeft.X, PosBottomLeft.Y)
-        Cham.Quad1.PointC = Vector2.new(PosBottomRight.X, PosBottomRight.Y)
-        Cham.Quad1.PointD = Vector2.new(PosTopRight.X, PosTopRight.Y)
+        if PosTopLeft and PosTopRight and PosBottomLeft and PosBottomRight and Cham.Quad1 then
+            Cham.Quad1.PointA = Vector2.new(PosTopLeft.X, PosTopLeft.Y)
+            Cham.Quad1.PointB = Vector2.new(PosBottomLeft.X, PosBottomLeft.Y)
+            Cham.Quad1.PointC = Vector2.new(PosBottomRight.X, PosBottomRight.Y)
+            Cham.Quad1.PointD = Vector2.new(PosTopRight.X, PosTopRight.Y)
+        end
 
         -- Quad 2 - Back
         local PosTopLeft2 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, PartSize.Y, -PartSize.Z).Position)
         local PosTopRight2 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, PartSize.Y, -PartSize.Z).Position)
         local PosBottomLeft2 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, -PartSize.Z).Position)
         local PosBottomRight2 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-        Cham.Quad2.PointA = Vector2.new(PosTopLeft2.X, PosTopLeft2.Y)
-        Cham.Quad2.PointB = Vector2.new(PosBottomLeft2.X, PosBottomLeft2.Y)
-        Cham.Quad2.PointC = Vector2.new(PosBottomRight2.X, PosBottomRight2.Y)
-        Cham.Quad2.PointD = Vector2.new(PosTopRight2.X, PosTopRight2.Y)
+        if PosTopLeft2 and PosTopRight2 and PosBottomLeft2 and PosBottomRight2 and Cham.Quad2 then
+            Cham.Quad2.PointA = Vector2.new(PosTopLeft2.X, PosTopLeft2.Y)
+            Cham.Quad2.PointB = Vector2.new(PosBottomLeft2.X, PosBottomLeft2.Y)
+            Cham.Quad2.PointC = Vector2.new(PosBottomRight2.X, PosBottomRight2.Y)
+            Cham.Quad2.PointD = Vector2.new(PosTopRight2.X, PosTopRight2.Y)
+        end
 
         -- Quad 3 - Top
         local PosTopLeft3 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, PartSize.Y, PartSize.Z).Position)
         local PosTopRight3 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, PartSize.Y, PartSize.Z).Position)
         local PosBottomLeft3 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, PartSize.Y, -PartSize.Z).Position)
         local PosBottomRight3 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, PartSize.Y, -PartSize.Z).Position)
-        Cham.Quad3.PointA = Vector2.new(PosTopLeft3.X, PosTopLeft3.Y)
-        Cham.Quad3.PointB = Vector2.new(PosBottomLeft3.X, PosBottomLeft3.Y)
-        Cham.Quad3.PointC = Vector2.new(PosBottomRight3.X, PosBottomRight3.Y)
-        Cham.Quad3.PointD = Vector2.new(PosTopRight3.X, PosTopRight3.Y)
+        if PosTopLeft3 and PosTopRight3 and PosBottomLeft3 and PosBottomRight3 and Cham.Quad3 then
+            Cham.Quad3.PointA = Vector2.new(PosTopLeft3.X, PosTopLeft3.Y)
+            Cham.Quad3.PointB = Vector2.new(PosBottomLeft3.X, PosBottomLeft3.Y)
+            Cham.Quad3.PointC = Vector2.new(PosBottomRight3.X, PosBottomRight3.Y)
+            Cham.Quad3.PointD = Vector2.new(PosTopRight3.X, PosTopRight3.Y)
+        end
 
--- Quad 4 - Bottom
-local PosTopLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, PartSize.Z).Position)
-local PosTopRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, PartSize.Z).Position)
-local PosBottomLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-local PosBottomRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-
-if PosTopLeft4 and PosTopRight4 and PosBottomLeft4 and PosBottomRight4 then
-    Cham.Quad4.PointA = Vector2.new(PosTopLeft4.X, PosTopLeft4.Y)
-    Cham.Quad4.PointB = Vector2.new(PosBottomLeft4.X, PosBottomLeft4.Y)
-    Cham.Quad4.PointC = Vector2.new(PosBottomRight4.X, PosBottomRight4.Y)
-    Cham.Quad4.PointD = Vector2.new(PosTopRight4.X, PosTopRight4.Y)
-else
-    for i = 1, 6 do
-        Cham["Quad"..tostring(i)].Visible = false
-    end
-end
+        -- Quad 4 - Bottom
+        local PosTopLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, PartSize.Z).Position)
+        local PosTopRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, PartSize.Z).Position)
+        local PosBottomLeft4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, -PartSize.Z).Position)
+        local PosBottomRight4 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, -PartSize.Z).Position)
+        if PosTopLeft4 and PosTopRight4 and PosBottomLeft4 and PosBottomRight4 and Cham.Quad4 then
+            Cham.Quad4.PointA = Vector2.new(PosTopLeft4.X, PosTopLeft4.Y)
+            Cham.Quad4.PointB = Vector2.new(PosBottomLeft4.X, PosBottomLeft4.Y)
+            Cham.Quad4.PointC = Vector2.new(PosBottomRight4.X, PosBottomRight4.Y)
+            Cham.Quad4.PointD = Vector2.new(PosTopRight4.X, PosTopRight4.Y)
+        else
+            for i = 1, 6 do
+                if Cham["Quad"..tostring(i)] then
+                    Cham["Quad"..tostring(i)].Visible = false
+                end
+            end
+        end
 
         -- Quad 5 - Right
         local PosTopLeft5 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, PartSize.Y, PartSize.Z).Position)
         local PosTopRight5 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, PartSize.Y, -PartSize.Z).Position)
         local PosBottomLeft5 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, PartSize.Z).Position)
         local PosBottomRight5 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-        Cham.Quad5.PointA = Vector2.new(PosTopLeft5.X, PosTopLeft5.Y)
-        Cham.Quad5.PointB = Vector2.new(PosBottomLeft5.X, PosBottomLeft5.Y)
-        Cham.Quad5.PointC = Vector2.new(PosBottomRight5.X, PosBottomRight5.Y)
-        Cham.Quad5.PointD = Vector2.new(PosTopRight5.X, PosTopRight5.Y)
+        if PosTopLeft5 and PosTopRight5 and PosBottomLeft5 and PosBottomRight5 and Cham.Quad5 then
+            Cham.Quad5.PointA = Vector2.new(PosTopLeft5.X, PosTopLeft5.Y)
+            Cham.Quad5.PointB = Vector2.new(PosBottomLeft5.X, PosBottomLeft5.Y)
+            Cham.Quad5.PointC = Vector2.new(PosBottomRight5.X, PosBottomRight5.Y)
+            Cham.Quad5.PointD = Vector2.new(PosTopRight5.X, PosTopRight5.Y)
+        end
 
         -- Quad 6 - Left
         local PosTopLeft6 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, PartSize.Y, PartSize.Z).Position)
         local PosTopRight6 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, PartSize.Y, -PartSize.Z).Position)
         local PosBottomLeft6 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, PartSize.Z).Position)
         local PosBottomRight6 = ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(-PartSize.X, -PartSize.Y, -PartSize.Z).Position)
-        Cham.Quad6.PointA = Vector2.new(PosTopLeft6.X, PosTopLeft6.Y)
-        Cham.Quad6.PointB = Vector2.new(PosBottomLeft6.X, PosBottomLeft6.Y)
-        Cham.Quad6.PointC = Vector2.new(PosBottomRight6.X, PosBottomRight6.Y)
-        Cham.Quad6.PointD = Vector2.new(PosTopRight6.X, PosTopRight6.Y)
+        if PosTopLeft6 and PosTopRight6 and PosBottomLeft6 and PosBottomRight6 and Cham.Quad6 then
+            Cham.Quad6.PointA = Vector2.new(PosTopLeft6.X, PosTopLeft6.Y)
+            Cham.Quad6.PointB = Vector2.new(PosBottomLeft6.X, PosBottomLeft6.Y)
+            Cham.Quad6.PointC = Vector2.new(PosBottomRight6.X, PosBottomRight6.Y)
+            Cham.Quad6.PointD = Vector2.new(PosTopRight6.X, PosTopRight6.Y)
+        end
     else
         for i = 1, 6 do
-            Cham["Quad"..tostring(i)].Visible = false
+            if Cham["Quad"..tostring(i)] then
+                Cham["Quad"..tostring(i)].Visible = false
+            end
         end
     end
 end
