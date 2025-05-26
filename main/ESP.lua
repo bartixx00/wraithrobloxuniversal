@@ -1,4 +1,4 @@
--- ESP Module
+-- ESP Module (AirHub V2 Replica)
 local ESPModule = {}
 
 -- Global Variables
@@ -7,15 +7,16 @@ local CrosshairParts = {}
 local ServiceConnections = {}
 
 -- Initialize Module
-function ESPModule.Init(Config, Camera, LocalPlayer, Players, RunService, ESPObjectsTable, CrosshairPartsTable, ServiceConnectionsTable)
+function ESPModule.Init(Config, Camera, LocalPlayer, Players, RunService, UserInputService, ESPObjectsTable, CrosshairPartsTable, ServiceConnectionsTable)
     ESPModule.Config = Config
     ESPModule.Camera = Camera
     ESPModule.LocalPlayer = LocalPlayer
     ESPModule.Players = Players
     ESPModule.RunService = RunService
-    ESPObjects = ESPObjectsTable
-    CrosshairParts = CrosshairPartsTable
-    ServiceConnections = ServiceConnectionsTable
+    ESPModule.UserInputService = UserInputService
+    ESPObjects = ESPObjectsTable or ESPObjects
+    CrosshairParts = CrosshairPartsTable or CrosshairParts
+    ServiceConnections = ServiceConnectionsTable or ServiceConnections
 end
 
 -- Helper Functions
@@ -62,14 +63,14 @@ end
 
 function ESPModule.UpdateCham(Part, Cham)
     local CorFrame, PartSize = Part.CFrame, Part.Size / 2
-    if select(2, ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X / 2, PartSize.Y / 2, PartSize.Z / 2).Position)) and ESPModule.Config.ESP.ShowChams then
+    if select(2, ESPModule.Camera:WorldToViewportPoint(CorFrame * CFrame.new(PartSize.X / 2, PartSize.Y / 2, PartSize.Z / 2).Position)) and ESPModule.Config.ESP.Chams.Enabled then
         for i = 1, 6 do
             local Quad = Cham["Quad"..tostring(i)]
-            Quad.Transparency = ESPModule.Config.ESP.ChamsTransparency
-            Quad.Color = ESPModule.Config.ESP.ChamsColor
-            Quad.Thickness = 0
-            Quad.Filled = ESPModule.Config.ESP.ChamsFilled
-            Quad.Visible = ESPModule.Config.ESP.ShowChams
+            Quad.Transparency = ESPModule.Config.ESP.Chams.Transparency
+            Quad.Color = ESPModule.Config.ESP.Chams.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.ESP.Chams.Color
+            Quad.Thickness = ESPModule.Config.ESP.Chams.Thickness
+            Quad.Filled = ESPModule.Config.ESP.Chams.Filled
+            Quad.Visible = ESPModule.Config.ESP.Chams.Enabled
         end
 
         -- Quad 1 - Front
@@ -138,6 +139,11 @@ function ESPModule.UpdateCham(Part, Cham)
     end
 end
 
+function ESPModule.GetRainbowColor()
+    local RainbowSpeed = ESPModule.Config.ESP.RainbowSpeed or 1
+    return Color3.fromHSV(tick() % RainbowSpeed / RainbowSpeed, 1, 1)
+end
+
 function ESPModule.CreateESP(Player)
     if ESPObjects[Player] or Player == ESPModule.LocalPlayer then return end
 
@@ -148,7 +154,7 @@ function ESPModule.CreateESP(Player)
         ESP = Drawing.new("Text"),
         Tracer = Drawing.new("Line"),
         HeadDot = Drawing.new("Circle"),
-        HealthBar = {Main = Drawing.new("Square"), Outline = Drawing.new("Square")},
+        HealthBar = {Main = Drawing.new("Line"), Outline = Drawing.new("Line")},
         Box = {
             Square = Drawing.new("Square"),
             TopLeftLine = Drawing.new("Line"),
@@ -218,35 +224,35 @@ function ESPModule.CreateESP(Player)
             local Head = Character:FindFirstChild("Head")
 
             -- ESP Text
-            if ESPModule.Config.ESP.ShowNames or ESPModule.Config.ESP.ShowDistance or ESPModule.Config.ESP.ShowHealth then
+            if ESPModule.Config.ESP.DisplayName or ESPModule.Config.ESP.DisplayDistance or ESPModule.Config.ESP.DisplayHealth or ESPModule.Config.ESP.DisplayTool then
                 local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(Head.Position)
-                PlayerTable.ESP.Visible = ESPModule.Config.ESP.Enabled
-                if OnScreen and ESPModule.Config.ESP.Enabled then
+                PlayerTable.ESP.Visible = ESPModule.Config.ESP.Enabled and OnScreen
+                if OnScreen then
                     PlayerTable.ESP.Center = true
-                    PlayerTable.ESP.Size = ESPModule.Config.ESP.TextSize
-                    PlayerTable.ESP.Outline = ESPModule.Config.ESP.TextOutline
-                    PlayerTable.ESP.OutlineColor = ESPModule.Config.ESP.TextOutlineColor
-                    PlayerTable.ESP.Color = ESPModule.Config.ESP.TextColor
-                    PlayerTable.ESP.Transparency = ESPModule.Config.ESP.TextTransparency
-                    PlayerTable.ESP.Font = Drawing.Fonts.UI
+                    PlayerTable.ESP.Size = ESPModule.Config.ESP.Size
+                    PlayerTable.ESP.Outline = ESPModule.Config.ESP.Outline
+                    PlayerTable.ESP.OutlineColor = ESPModule.Config.ESP.OutlineColor
+                    PlayerTable.ESP.Color = ESPModule.Config.ESP.RainbowColor and ESPModule.GetRainbowColor()
+                    PlayerTable.ESP.Transparency = ESPModule.Config.ESP.Transparency
+                    PlayerTable.ESP.Font = Drawing.Fonts[ESPModule.Config.ESP.Font]
 
                     local Parts, Content, Tool = {
-                        Health = "("..tostring(math.floor(Humanoid.Health))..")",
+                        Health = "["..tostring(math.floor(Humanoid.Health)).."/"..tostring(math.floor(Humanoid.MaxHealth)).."]",
                         Distance = "["..tostring(math.floor((HumanoidRootPart.Position - (ESPModule.LocalPlayer.Character and ESPModule.LocalPlayer.Character.HumanoidRootPart.Position or Vector3.new())).Magnitude)).."]",
-                        Name = Player.DisplayName == Player.Name and Player.Name or Player.DisplayName.." {"..Player.Name.."}"
+                        Name = ESPModule.Config.ESP.DisplayName and Player.DisplayName == Player.Name and Player.Name or Player.DisplayName.." ("..Player.Name..")"
                     }, "", Character:FindFirstChildOfClass("Tool")
 
-                    if ESPModule.Config.ESP.ShowNames then
+                    if ESPModule.Config.ESP.DisplayName then
                         Content = Parts.Name..Content
                     end
-                    if ESPModule.Config.ESP.ShowHealth then
-                        Content = Parts.Health..(ESPModule.Config.ESP.ShowNames and " " or "")..Content
+                    if ESPModule.Config.ESP.DisplayHealth then
+                        Content = Parts.Health..(Content and " " or "")..Content
                     end
-                    if ESPModule.Config.ESP.ShowDistance then
-                        Content = Content.." "..Parts.Distance
+                    if ESPModule.Config.ESP.DisplayDistance then
+                        Content = Content..(Content and " " or "")..Parts.Distance
                     end
                     PlayerTable.ESP.Text = (Tool and "["..Tool.Name.."]\n" or "")..Content
-                    PlayerTable.ESP.Position = Vector2.new(Vector.X, Vector.Y - 20 - (Tool and 10 or 0))
+                    PlayerTable.ESP.Position = Vector2.new(Vector.X, Vector.Y - ESPModule.Config.ESP.Size - (Tool and 10 or 0))
                 else
                     PlayerTable.ESP.Visible = false
                 end
@@ -255,24 +261,24 @@ function ESPModule.CreateESP(Player)
             end
 
             -- Tracers
-            if ESPModule.Config.ESP.ShowTracers then
-                local HRPCFrame, HRPSize = HumanoidRootPart.CFrame, HumanoidRootPart.Size
+            if ESPModule.Config.ESP.Tracer.Enabled then
+                local HRPCFrame, HRPSize = HumanoidRootPart.Position, HumanoidRootPart.Size
                 local _3DVector, OnScreen = ESPModule.Camera:WorldToViewportPoint(HRPCFrame * CFrame.new(0, -HRPSize.Y - 0.5, 0).Position)
                 local _2DVector = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position)
                 local HeadOffset = ESPModule.Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
                 local LegsOffset = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position - Vector3.new(0, 1.5, 0))
                 if OnScreen then
                     PlayerTable.Tracer.Visible = true
-                    PlayerTable.Tracer.Thickness = 1
-                    PlayerTable.Tracer.Color = ESPModule.Config.ESP.TracerColor
-                    PlayerTable.Tracer.Transparency = 0.7
-                    PlayerTable.Tracer.To = ESPModule.Config.ESP.BoxType == 1 and Vector2.new(_3DVector.X, _3DVector.Y) or Vector2.new(_2DVector.X, _2DVector.Y - (HeadOffset.Y - LegsOffset.Y) * 0.75)
-                    if ESPModule.Config.ESP.TracerType == 1 then
+                    PlayerTable.Tracer.Thickness = ESPModule.Config.ESP.Tracer.Thickness
+                    PlayerTable.Tracer.Color = ESPModule.Config.ESP.Tracer.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.ESP.Tracer.Color
+                    PlayerTable.Tracer.Transparency = ESPModule.Config.ESP.Tracer.Transparency
+                    PlayerTable.Tracer.To = ESPModule.Config.ESP.BoxType == 1 and Vector2.new(_3DVector.X, _3DVector.Y) or Vector2.new(_2DVector.X, _2DVector.Y - (HeadOffset.Y - LegsOffset.Y) * 0.5)
+                    if ESPModule.Config.ESP.Tracer.Position == 1 then
                         PlayerTable.Tracer.From = Vector2.new(ESPModule.Camera.ViewportSize.X / 2, ESPModule.Camera.ViewportSize.Y)
-                    elseif ESPModule.Config.ESP.TracerType == 2 then
+                    elseif ESPModule.Config.ESP.Tracer.Position == 2 then
                         PlayerTable.Tracer.From = Vector2.new(ESPModule.Camera.ViewportSize.X / 2, ESPModule.Camera.ViewportSize.Y / 2)
-                    elseif ESPModule.Config.ESP.TracerType == 3 then
-                        PlayerTable.Tracer.From = Vector2.new(ESPModule.UserInputService:GetMouseLocation().X, ESPModule.UserInputService:GetMouseLocation().Y)
+                    elseif ESPModule.Config.ESP.Tracer.Position == 3 then
+                        PlayerTable.Tracer.From = ESPModule.UserInputService:GetMouseLocation()
                     else
                         PlayerTable.Tracer.From = Vector2.new(ESPModule.Camera.ViewportSize.X / 2, ESPModule.Camera.ViewportSize.Y)
                     end
@@ -284,27 +290,28 @@ function ESPModule.CreateESP(Player)
             end
 
             -- 3D/2D Boxes
-            if ESPModule.Config.ESP.Show3DBoxes then
+            if ESPModule.Config.ESP.Box.Enabled then
                 local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position)
-                local HRPCFrame, HRPSize = HumanoidRootPart.CFrame, HumanoidRootPart.Size
+                local HRPCFrame, HRPSize = HumanoidRootPart.Position, HumanoidRootPart.Size
                 local HeadOffset = ESPModule.Camera:WorldToViewportPoint(Head.Position + Vector3.new(0, 0.5, 0))
-                local LegsOffset = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position - Vector3.new(0, 3, 0))
-                local TopLeftPosition = ESPModule.Camera:WorldToViewportPoint(HRPCFrame * CFrame.new(HRPSize.X, HRPSize.Y, 0).Position)
-                local TopRightPosition = ESPModule.Camera:WorldToViewportPoint(HRPCFrame * CFrame.new(-HRPSize.X, HRPSize.Y, 0).Position)
-                local BottomLeftPosition = ESPModule.Camera:WorldToViewportPoint(HRPCFrame * CFrame.new(HRPSize.X, -HRPSize.Y - 0.5, 0).Position)
-                local BottomRightPosition = ESPModule.Camera:WorldToViewportPoint(HRPCFrame * CFrame.new(-HRPSize.X, -HRPSize.Y - 0.5, 0).Position)
+                local LegsOffset = ESPModule.Camera.WorldToViewportPoint(HumanoidRootPart.Position - Vector3.new(0, 3, 0))
+                local TopLeftPosition = ESPModule.Camera.WorldToViewportPoint(HRPCFrame * CFrame.new(HRPSize.X, HRPSize.Y, 0).Position)
+                local TopRightPosition = ESPModule.Camera.WorldToViewportPoint(HRPCFrame * CFrame.new(-HRPSize.X, HRPSize.Y, 0)).Position)
+                local BottomLeftPosition = ESPModule.Camera.WorldToViewportPoint(HRPCFrame * CFrame.new(HRPSize.X, -HRPSize.Y - 0.5, 0)).Position
+                local BottomRightPosition = ESPModule.Camera.WorldToViewportPoint(HRPCFrame * CFrame.new(-HRPSize.X, -HRPSize.Y - 0.5, 0)).Position)
 
-                if ESPModule.Config.ESP.BoxType == 1 then
+                if ESPModule.Config.ESP.Box.Type == 1 then
+                    -- 3D Box
                     PlayerTable.Box.Square.Visible = false
                     PlayerTable.Box.TopLeftLine.Visible = true
                     PlayerTable.Box.TopRightLine.Visible = true
                     PlayerTable.Box.BottomLeftLine.Visible = true
                     PlayerTable.Box.BottomRightLine.Visible = true
 
-                    for _, line in pairs({PlayerTable.Box.TopLeftLine, PlayerTable.Box.TopRightLine, PlayerTable.Box.BottomLeftLine, PlayerTable.Box.BottomRightLine}) do
-                        line.Thickness = 1
-                        line.Transparency = 0.7
-                        line.Color = ESPModule.Config.ESP.BoxColor
+                    for _, line in ipairs({PlayerTable.Box.TopLeftLine, PlayerTable.Box.TopRightLine, PlayerTable.Box.BottomLeftLine})
+                        line.Thickness = ESPModule.Config.ESP.Box.Thickness
+                        line.Transparency = ESPModule.Config.ESP.Box.Transparency
+                        line.Color = ESPModule.Config.ESP.Box.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.ESP.Box.Color
                     end
 
                     PlayerTable.Box.TopLeftLine.From = Vector2.new(TopLeftPosition.X, TopLeftPosition.Y)
@@ -314,18 +321,19 @@ function ESPModule.CreateESP(Player)
                     PlayerTable.Box.BottomLeftLine.From = Vector2.new(BottomLeftPosition.X, BottomLeftPosition.Y)
                     PlayerTable.Box.BottomLeftLine.To = Vector2.new(TopLeftPosition.X, TopLeftPosition.Y)
                     PlayerTable.Box.BottomRightLine.From = Vector2.new(BottomRightPosition.X, BottomRightPosition.Y)
-                    PlayerTable.Box.BottomRightLine.To = Vector2.new(BottomLeftPosition.X, BottomLeftPosition.Y)
+                    To = Vector2.new(BottomLeftPosition.X, BottomLeftPosition.Y)
                 else
+                    -- 2D Box
                     PlayerTable.Box.Square.Visible = true
                     PlayerTable.Box.TopLeftLine.Visible = false
                     PlayerTable.Box.TopRightLine.Visible = false
                     PlayerTable.Box.BottomLeftLine.Visible = false
                     PlayerTable.Box.BottomRightLine.Visible = false
 
-                    PlayerTable.Box.Square.Thickness = 1
-                    PlayerTable.Box.Square.Color = ESPModule.Config.ESP.BoxColor
-                    PlayerTable.Box.Square.Transparency = 0.7
-                    PlayerTable.Box.Square.Filled = false
+                    PlayerTable.Box.Square.Thickness = ESPModule.Config.ESP.Box.Thickness
+                    PlayerTable.Box.Square.Color = ESPModule.Config.ESP.Box.RainbowColor
+                    PlayerTable.Box.Square.Transparency = ESPModule.Config.ESP.Box.Transparency
+                    PlayerTable.Box.Square.Filled = ESPModule.Config.ESP.Box.Filled
                     PlayerTable.Box.Square.Size = Vector2.new(2000 / Vector.Z, HeadOffset.Y - LegsOffset.Y)
                     PlayerTable.Box.Square.Position = Vector2.new(Vector.X - PlayerTable.Box.Square.Size.X / 2, Vector.Y - PlayerTable.Box.Square.Size.Y / 2)
                 end
@@ -338,50 +346,60 @@ function ESPModule.CreateESP(Player)
             end
 
             -- HeadDot
-            if ESPModule.Config.ESP.ShowHeadDots then
+            if ESPModule.Config.ESP.HeadDot.Enabled then
                 local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(Head.Position)
                 PlayerTable.HeadDot.Visible = OnScreen and ESPModule.Config.ESP.Enabled
                 if OnScreen then
-                    PlayerTable.HeadDot.Thickness = 1
-                    PlayerTable.HeadDot.Color = ESPModule.Config.ESP.HeadDotColor
-                    PlayerTable.HeadDot.Transparency = ESPModule.Config.ESP.HeadDotTransparency
-                    PlayerTable.HeadDot.NumSides = 30
-                    PlayerTable.HeadDot.Filled = false
+                    PlayerTable.HeadDot.Thickness = ESPModule.Config.ESP.HeadDot.Thickness
+                    PlayerTable.HeadDot.Color = ESPModule.Config.ESP.HeadDot.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.ESP.HeHeadDot.Color
+                    PlayerTable.HeadDot.Transparency = ESPModule.Config.ESP.HeadDot.Transparency
+                    PlayerTable.HeadDot.NumSides = ESPModule.Config.ESP.HeadDot.NumSides
+                    PlayerTable.HeadDot.Filled = ESPModule.Config.ESP.HeadDot.Filled
                     PlayerTable.HeadDot.Position = Vector2.new(Vector.X, Vector.Y)
-                    local Top, Bottom = ESPModule.Camera:WorldToViewportPoint((Head.CFrame * CFrame.new(0, Head.Size.Y / 2, 0)).Position), ESPModule.Camera:WorldToViewportPoint((Head.CFrame * CFrame.new(0, -Head.Size.Y / 2, 0)).Position)
-                    PlayerTable.HeadDot.Radius = math.abs((Top - Bottom).Y) - 3
-                else
-                    PlayerTable.HeadDot.Visible = false
+                    local Top, Bottom = ESPModule.Camera:WorldToViewportPoint((Head.CFrame * CFrame.new(0, Head.Size.Y / 2, 0)).Position), ESPModule.Camera.WorldToViewportPoint((Head.CFrame * CFrame.new(0, -Head.Size.Y / 2, 0)).Position)
+                    PlayerTable.HeadDot.Radius = math.abs((Top - Bottom).Y) - 2
                 end
             else
                 PlayerTable.HeadDot.Visible = false
             end
 
             -- HealthBar
-            if ESPModule.Config.ESP.ShowHealth then
+            if ESPModule.Config.ESP.HealthBar.Enabled then
                 local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position)
-                local LeftPosition = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
-                local RightPosition = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(-HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
+                local LeftPosition = ESPModule.Camera.WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
+                local RightPosition = ESPModule.Camera.WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(-HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0)).Position)
                 PlayerTable.HealthBar.Main.Visible = OnScreen and ESPModule.Config.ESP.Enabled
-                PlayerTable.HealthBar.Outline.Visible = OnScreen and ESPModule.Config.ESP.Enabled
+                PlayerTable.HealthBar.Outline.Visible = OnScreen and ESPModule.Config.ESP.HealthBar.Outline
                 if OnScreen then
-                    PlayerTable.HealthBar.Main.Thickness = 1
-                    PlayerTable.HealthBar.Main.Color = Color3.fromRGB(255 - math.floor(Humanoid.Health / 100 * 255), math.floor(Humanoid.Health / 100 * 255), 50)
-                    PlayerTable.HealthBar.Main.Transparency = 0.8
+                    PlayerTable.HealthBar.Main.Thickness = ESPModule.Config.ESP.HealthBar.Thickness
+                    PlayerTable.HealthBar.Main.Color = ESPModule.GetColorFromHealthBar(Humanoid.Health, Humanoid.MaxHealth)
+                    PlayerTable.HealthBar.Main.Transparency = ESPModule.Config.ESP.HealthBar.Transparency
                     PlayerTable.HealthBar.Main.Filled = true
-                    PlayerTable.HealthBar.Main.ZIndex = 2
-                    PlayerTable.HealthBar.Outline.Thickness = 3
-                    PlayerTable.HealthBar.Outline.Color = Color3.fromRGB(0, 0, 0)
-                    PlayerTable.HealthBar.Outline.Transparency = 0.8
-                    PlayerTable.HealthBar.Outline.Filled = false
-                    PlayerTable.HealthBar.Main.ZIndex = 1
-                    PlayerTable.HealthBar.Outline.Size = Vector2.new(2, 2500 / Vector.Z)
-                    PlayerTable.HealthBar.Main.Size = Vector2.new(2, PlayerTable.HealthBar.Outline.Size.Y * (Humanoid.Health / 100))
-                    PlayerTable.HealthBar.Main.Position = Vector2.new(LeftPosition.X - 10, Vector.Y - PlayerTable.HealthBar.Outline.Size.Y / 2)
-                    PlayerTable.HealthBar.Outline.Position = PlayerTable.HealthBar.Main.Position
-                else
-                    PlayerTable.HealthBar.Main.Visible = false
-                    PlayerTable.HealthBar.Outline.Visible = false
+                    PlayerTable.HealthBar.Outline.Thickness = ESPModule.Config.ESP.HealthBar.OutlineThickness
+                    PlayerTable.HealthBar.Outline.Color = ESPModule.Config.ESP.HealthBar.OutlineColor
+                    PlayerTable.HealthBar.Outline.Transparency = ESPModule.Config.ESP.HealthBar.Transparency
+                    local Offset = ESPModule.Config.ESPModule.HealthBar.Offset
+                    if ESPModule.Config.ESP.HealthBar.Position == 1 then -- Top
+                        PlayerTable.HealthBar.Main.From = Vector2.new(Vector.X, Vector.Y - Offset)
+                        PlayerTable.HealthBar.Main.To = Vector2.new(Vector.X + (Humanoid.Health / Humanoid.MaxHealth) * 100, Vector.Y - Offset)
+                        PlayerTable.HealthBar.Outline.From = Vector2.new(Vector.X - 1, Vector.Y - Offset)
+                        PlayerTable.HealthBar.Outline.To = Vector2.new(Vector.X + 101, Vector.Y - Offset)
+                    elseif ESPModule.Config.ESP.HealthBar.Position == 2 then -- Bottom
+                        PlayerTable.HealthBar.Main.From = Vector2.new(Vector.X, Vector.Y + Size.Y + Offset)
+                        PlayerTable.HealthBar.Main.To = Vector2.new(Vector.X + (Humanoid.Health / Humanoid.MaxHealth) * 100, Vector.Y + Size.Y + Offset)
+                        PlayerTable.HealthBar.Outline.From = Vector2.new(Vector.X - 1, Vector.Y + Size.Y + Offset)
+                        PlayerTable.HealthBar.Outline.To = Vector2.new(Vector.X + 101, Vector.Y + Size.Y + Offset)
+                    elseif ESPModule.Config.ESP.HealthBar.Position == 3 then -- Left
+                        PlayerTable.HealthBar.Main.From = Vector2.new(LeftPosition.X - Offset, Vector.Y + Size.Y)
+                        PlayerTable.HealthBar.Main.To = Vector2.new(LeftPosition.X - Offset, Vector.Y - (Humanoid.Health / Humanoid.MaxHealth) * Size.Y)
+                        PlayerTable.HealthBar.Outline.From = Vector2.new(LeftPosition.X - Offset, Vector.Y + Size.Y + 1)
+                        PlayerTable.HealthBar.Outline.To = Vector2.new(LeftPosition.X - Offset, Vector.Y - Size.Y - 1)
+                    elseif ESPModule.Config.ESP.HealthBar.Position == 4 then -- Right
+                        PlayerTable.HealthBar.Main.From = Vector2.new(RightPosition.X + Offset, Vector.Y + Size.Y)
+                        PlayerTable.HealthBar.Main.To = Vector2.new(RightPosition.X + Offset, Vector.Y - (Humanoid.Health / Humanoid.MaxHealth) * Size.Y)
+                        PlayerTable.HealthBar.Outline.From = Vector2.new(RightPosition.X + Offset, Vector.Y + Size.Y + 1)
+                        PlayerTable.HealthBar.Outline.To = Vector2.new(RightPosition.X + Offset, Vector.Y - Size.Y - 1)
+                    end
                 end
             else
                 PlayerTable.HealthBar.Main.Visible = false
@@ -389,10 +407,10 @@ function ESPModule.CreateESP(Player)
             end
 
             -- Chams
-            if ESPModule.Config.ESP.ShowChams then
-                for i, v in next, PlayerTable.Chams do
-                    if Character:FindFirstChild(i) then
-                        ESPModule.UpdateCham(Character[i], v)
+            if ESPModule.Config.ESP.Chams.Enabled then
+                for _, v in next, PlayerTable.Chams do
+                    if Character:FindFirstChild(_) then
+                        ESPModule.UpdateCham(Character[_], v)
                     end
                 end
             else
@@ -427,11 +445,10 @@ end
 function ESPModule.RemoveESP(Player)
     local PlayerTable = ESPObjects[Player]
     if PlayerTable then
-        for _, Connection in pairs(PlayerTable.Connections) do
+        for _, Connection in next, PlayerTable.Connections do
             if Connection then
                 pcall(function() Connection:Disconnect() end)
             end
-        end
         pcall(function()
             if PlayerTable.ESP then PlayerTable.ESP:Remove() end
             if PlayerTable.Tracer then PlayerTable.Tracer:Remove() end
@@ -455,45 +472,99 @@ end
 
 -- Crosshair
 function ESPModule.AddCrosshair()
-    local AxisX, AxisY = ESPModule.Camera.ViewportSize.X / 2, ESPModule.Camera.ViewportSize.Y / 2
-    ServiceConnections.AxisConnection = ESPModule.RunService.RenderStepped:Connect(function()
+    CrosshairParts = {
+        OutlineLeftLine = Drawing.new("Line"),
+        OutlineRightLine = Drawing.new("Line"),
+        OutlineTopLine = Drawing.new("Line"),
+        OutlineBottomLine = Drawing.new("Line"),
+        OutlineCenterDot = Drawing.new("Circle"),
+        LeftLine = Drawing.new("Line"),
+        RightLine = Drawing.new("Line"),
+        TopLine = Drawing.new("Line"),
+        BottomLine = Drawing.new("Line"),
+        CenterDot = Drawing.new("Circle")
+    }
+
+    local Axis, Rotation, GapSize = Vector2.new(0, 0), 0, ESPModule.Config.Crosshair.GapSize
+    ServiceConnections.UpdateCrosshairAxis = ESPModule.RunService.RenderStepped:Connect(function()
         if ESPModule.Config.Crosshair.Enabled then
-            if ESPModule.Config.Crosshair.Type == 1 then
-                AxisX, AxisY = ESPModule.UserInputService:GetMouseLocation().X, ESPModule.UserInputService:GetMouseLocation().Y
-            elseif ESPModule.Config.Crosshair.Type == 2 then
-                AxisX, AxisY = ESPModule.Camera.ViewportSize.X / 2, ESPModule.Camera.ViewportSize.Y / 2
+            if ESPModule.Config.Crosshair.Position == 1 then
+                Axis = ESPModule.UserInputService:GetMouseLocation()
+            elseif ESPModule.Config.Crosshair.Position == 2 then
+                Axis = ESPModule.Camera.ViewportSize / 2
+            end
+            if ESPModule.Config.Crosshair.PulseGap then
+                GapSize = math.abs(math.sin(tick() * ESPModule.Config.Crosshair.PulsingSpeed) * ESPModule.Config.Crosshair.PulsingStep)
+                GapSize = math.clamp(GapSize, ESPModule.Config.Crosshair.PulsingBounds[1], ESPModule.Config.Crosshair.PulsingBounds[2])
+            else
+                GapSize = ESPModule.Config.Crosshair.GapSize
+            end
+            if ESPModule.Config.Crosshair.Rotate then
+                Rotation = math.deg(tick() * ESPModule.Config.Crosshair.RotationSpeed)
+                Rotation = ESPModule.Config.Crosshair.RotateClockwise and Rotation or -Rotation
+            else
+                Rotation = ESPModule.Config.Crosshair.Rotation
             end
         end
     end)
-    ServiceConnections.CrosshairConnection = ESPModule.RunService.RenderStepped:Connect(function()
+
+    ServiceConnections.UpdateCrosshair = ESPModule.RunService.RenderStepped:Connect(function()
         if ESPModule.Config.Crosshair.Enabled then
-            for _, line in pairs({CrosshairParts.LeftLine, CrosshairParts.RightLine, CrosshairParts.TopLine, CrosshairParts.BottomLine}) do
-                line.Visible = true
-                line.Color = ESPModule.Config.Crosshair.Color
-                line.Thickness = ESPModule.Config.Crosshair.Thickness
-                line.Transparency = ESPModule.Config.Crosshair.Transparency
+            local AxisX, AxisY = Axis.X, Axis.Y
+            for _, line in ipairs({"LeftLine", "RightLine", "TopLine", "BottomLine"}) do
+                CrosshairParts[line].Visible = (line ~= "TopLine" or not ESPModule.Config.Crosshair.TStyled)
+                CrosshairParts[line].Color = ESPModule.Config.Crosshair.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.Crosshair.Color
+                CrosshairParts[line].Thickness = ESPModule.Config.Crosshair.Thickness
+                CrosshairParts[line].Transparency = ESPModule.Config.Crosshair.Transparency
+                CrosshairParts["Outline"..line].Visible = ESPModule.Config.Crosshair.Outline and CrosshairParts[line].Visible
+                CrosshairParts["Outline"..line].Color = ESPModule.Config.Crosshair.RainbowOutlineColor and ESPModule.GetRainbowColor() or ESPModule.Config.Crosshair.OutlineColor
+                CrosshairParts["Outline"..line].Thickness = ESPModule.Config.Crosshair.Thickness + 1
+                CrosshairParts["Outline"..line].Transparency = ESPModule.Config.Crosshair.Transparency
             end
-            CrosshairParts.LeftLine.From = Vector2.new(AxisX - (math.cos(math.rad(ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize), AxisY - (math.sin(math.rad(ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize))
-            CrosshairParts.LeftLine.To = Vector2.new(AxisX - (math.cos(math.rad(ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)), AxisY - (math.sin(math.rad(ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)))
-            CrosshairParts.RightLine.From = Vector2.new(AxisX + (math.cos(math.rad(ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize), AxisY + (math.sin(math.rad(ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize))
-            CrosshairParts.RightLine.To = Vector2.new(AxisX + (math.cos(math.rad(ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)), AxisY + (math.sin(math.rad(ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)))
-            CrosshairParts.TopLine.From = Vector2.new(AxisX - (math.sin(math.rad(-ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize), AxisY - (math.cos(math.rad(-ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize))
-            CrosshairParts.TopLine.To = Vector2.new(AxisX - (math.sin(math.rad(-ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)), AxisY - (math.cos(math.rad(-ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)))
-            CrosshairParts.BottomLine.From = Vector2.new(AxisX + (math.sin(math.rad(-ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize), AxisY + (math.cos(math.rad(-ESPModule.Config.Crosshair.Rotation)) * ESPModule.Config.Crosshair.GapSize))
-            CrosshairParts.BottomLine.To = Vector2.new(AxisX + (math.sin(math.rad(-ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)), AxisY + (math.cos(math.rad(-ESPModule.Config.Crosshair.Rotation)) * (ESPModule.Config.Crosshair.Size + ESPModule.Config.Crosshair.GapSize)))
-            CrosshairParts.CenterDot.Visible = ESPModule.Config.Crosshair.CenterDot
-            CrosshairParts.CenterDot.Color = ESPModule.Config.Crosshair.CenterDotColor
-            CrosshairParts.CenterDot.Radius = ESPModule.Config.Crosshair.CenterDotSize
-            CrosshairParts.CenterDot.Transparency = ESPModule.Config.Crosshair.CenterDotTransparency
-            CrosshairParts.CenterDot.Filled = ESPModule.Config.Crosshair.CenterDotFilled
-            CrosshairParts.CenterDot.Thickness = ESPModule.Config.Crosshair.CenterDotThickness
+
+            CrosshairParts.LeftLine.From = Vector2.new(AxisX - (math.cos(math.rad(Rotation)) * GapSize), AxisY - (math.sin(math.rad(Rotation)) * GapSize))
+            CrosshairParts.LeftLine.To = Vector2.new(AxisX - (math.cos(math.rad(Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)), AxisY - (math.sin(math.rad(Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)))
+            CrosshairParts.RightLine.From = Vector2.new(AxisX + (math.cos(math.rad(Rotation)) * GapSize), AxisY + (math.sin(math.rad(Rotation)) * GapSize))
+            CrosshairParts.RightLine.To = Vector2.new(AxisX + (math.cos(math.rad(Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)), AxisY + (math.sin(math.rad(Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)))
+            CrosshairParts.TopLine.From = Vector2.new(AxisX - (math.sin(math.rad(-Rotation)) * GapSize), AxisY - (math.cos(math.rad(-Rotation)) * GapSize))
+            CrosshairParts.TopLine.To = Vector2.new(AxisX - (math.sin(math.rad(-Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)), AxisY - (math.cos(math.rad(-Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)))
+            CrosshairParts.BottomLine.From = Vector2.new(AxisX + (math.sin(math.rad(-Rotation)) * GapSize), AxisY + (math.cos(math.rad(-Rotation)) * GapSize))
+            CrosshairParts.BottomLine.To = Vector2.new(AxisX + (math.sin(math.rad(-Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)), AxisY + (math.cos(math.rad(-Rotation)) * (ESPModule.Config.Crosshair.Size + GapSize)))
+
+            CrosshairParts["OutlineLeftLine"].From = CrosshairParts.LeftLine.From
+            CrosshairParts["OutlineLeftLine"].To = CrosshairParts.LeftLine.To
+            CrosshairParts["OutlineRightLine"].From = CrosshairParts.RightLine.From
+            CrosshairParts["OutlineRightLine"].To = CrosshairParts.RightLine.To
+            CrosshairParts["OutlineTopLine"].From = CrosshairParts.TopLine.From
+            CrosshairParts["OutlineTopLine"].To = CrosshairParts.TopLine.To
+            CrosshairParts["OutlineBottomLine"].From = CrosshairParts.BottomLine.From
+            CrosshairParts["OutlineBottomLine"].To = CrosshairParts.BottomLine.To
+
+            CrosshairParts.CenterDot.Visible = ESPModule.Config.Crosshair.CenterDot.Enabled
+            CrosshairParts.CenterDot.Color = ESPModule.Config.Crosshair.CenterDot.RainbowColor and ESPModule.GetRainbowColor() or ESPModule.Config.Crosshair.CenterDot.Color
+            CrosshairParts.CenterDot.Radius = ESPModule.Config.Crosshair.CenterDot.Radius
+            CrosshairParts.CenterDot.Transparency = ESPModule.Config.Crosshair.CenterDot.Transparency
+            CrosshairParts.CenterDot.Filled = ESPModule.Config.Crosshair.CenterDot.Filled
+            CrosshairParts.CenterDot.Thickness = ESPModule.Config.Crosshair.CenterDot.Thickness
             CrosshairParts.CenterDot.Position = Vector2.new(AxisX, AxisY)
+            CrosshairParts.OutlineCenterDot.Visible = ESPModule.Config.Crosshair.CenterDot.Enabled and ESPModule.Config.Crosshair.CenterDot.Outline
+            CrosshairParts.OutlineCenterDot.Color = ESPModule.Config.Crosshair.CenterDot.RainbowOutlineColor and ESPModule.GetRainbowColor() or ESPModule.Config.Crosshair.CenterDot.OutlineColor
+            CrosshairParts.OutlineCenterDot.Radius = ESPModule.Config.Crosshair.CenterDot.Radius
+            CrosshairParts.OutlineCenterDot.Transparency = ESPModule.Config.Crosshair.CenterDot.Transparency
+            CrosshairParts.OutlineCenterDot.Filled = ESPModule.Config.Crosshair.CenterDot.Filled
+            CrosshairParts.OutlineCenterDot.Thickness = ESPModule.Config.Crosshair.CenterDot.Thickness + 1
+            CrosshairParts.OutlineCenterDot.Position = Vector2.new(AxisX, AxisY)
         else
-            for _, line in pairs({CrosshairParts.LeftLine, CrosshairParts.RightLine, CrosshairParts.TopLine, CrosshairParts.BottomLine, CrosshairParts.CenterDot}) do
+            for _, line in pairs(CrosshairParts) do
                 line.Visible = false
             end
         end
     end)
+end
+
+function ESPModule.GetColorFromHealth(Health, MaxHealth)
+    local Blue = ESPModule.Config.ESP.HealthBar.Blue or 50
+    return Color3.fromRGB(255 - math.floor(Health / MaxHealth * 255), math.floor(Health / MaxHealth * 255), Blue)
 end
 
 return ESPModule
