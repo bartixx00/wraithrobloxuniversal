@@ -1,49 +1,51 @@
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local Camera = workspace.CurrentCamera
 
-return function(Config, CrosshairParts, ServiceConnections)
-    local function AddCrosshair()
-        local AxisX, AxisY = Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2
-        ServiceConnections.AxisConnection = RunService.RenderStepped:Connect(function()
-            if Config.Crosshair.Enabled then
-                if Config.Crosshair.Type == 1 then
-                    AxisX, AxisY = UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y
-                elseif Config.Crosshair.Type == 2 then
-                    AxisX, AxisY = Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2
-                end
-            end
-        end)
-        ServiceConnections.CrosshairConnection = RunService.RenderStepped:Connect(function()
-            if Config.Crosshair.Enabled then
-                for _, line in pairs({CrosshairParts.LeftLine, CrosshairParts.RightLine, CrosshairParts.TopLine, CrosshairParts.BottomLine}) do
-                    line.Visible = true
-                    line.Color = Config.Crosshair.Color
-                    line.Thickness = Config.Crosshair.Thickness
-                    line.Transparency = Config.Crosshair.Transparency
-                end
-                CrosshairParts.LeftLine.From = Vector2.new(AxisX - (math.cos(math.rad(Config.Crosshair.Rotation)) * Config.Crosshair.GapSize), AxisY - (math.sin(math.rad(Config.Crosshair.Rotation)) * Config.Crosshair.GapSize))
-                CrosshairParts.LeftLine.To = Vector2.new(AxisX - (math.cos(math.rad(Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)), AxisY - (math.sin(math.rad(Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)))
-                CrosshairParts.RightLine.From = Vector2.new(AxisX + (math.cos(math.rad(Config.Crosshair.Rotation)) * Config.Crosshair.GapSize), AxisY + (math.sin(math.rad(Config.Crosshair.Rotation)) * Config.Crosshair.GapSize))
-                CrosshairParts.RightLine.To = Vector2.new(AxisX + (math.cos(math.rad(Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)), AxisY + (math.sin(math.rad(Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)))
-                CrosshairParts.TopLine.From = Vector2.new(AxisX - (math.sin(math.rad(-Config.Crosshair.Rotation)) * Config.Crosshair.GapSize), AxisY - (math.cos(math.rad(-Config.Crosshair.Rotation)) * Config.Crosshair.GapSize))
-                CrosshairParts.TopLine.To = Vector2.new(AxisX - (math.sin(math.rad(-Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)), AxisY - (math.cos(math.rad(-Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)))
-                CrosshairParts.BottomLine.From = Vector2.new(AxisX + (math.sin(math.rad(-Config.Crosshair.Rotation)) * Config.Crosshair.GapSize), AxisY + (math.cos(math.rad(-Config.Crosshair.Rotation)) * Config.Crosshair.GapSize))
-                CrosshairParts.BottomLine.To = Vector2.new(AxisX + (math.sin(math.rad(-Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)), AxisY + (math.cos(math.rad(-Config.Crosshair.Rotation)) * (Config.Crosshair.Size + Config.Crosshair.GapSize)))
-                CrosshairParts.CenterDot.Visible = Config.Crosshair.CenterDot
-                CrosshairParts.CenterDot.Color = Config.Crosshair.CenterDotColor
-                CrosshairParts.CenterDot.Radius = Config.Crosshair.CenterDotSize
-                CrosshairParts.CenterDot.Transparency = Config.Crosshair.CenterDotTransparency
-                CrosshairParts.CenterDot.Filled = Config.Crosshair.CenterDotFilled
-                CrosshairParts.CenterDot.Thickness = Config.Crosshair.CenterDotThickness
-                CrosshairParts.CenterDot.Position = Vector2.new(AxisX, AxisY)
-            else
-                for _, line in pairs({CrosshairParts.LeftLine, CrosshairParts.RightLine, CrosshairParts.TopLine, CrosshairParts.BottomLine, CrosshairParts.CenterDot}) do
-                    line.Visible = false
-                end
-            end
-        end)
+return function(Config, CrosshairParts, ServiceConnections, Window)
+    local function CreateCrosshairPart()
+        local Part = Drawing.new("Line")
+        Part.Thickness = Config.Crosshair.Thickness
+        Part.Color = Config.Crosshair.Color
+        return Part
     end
+
+    local function UpdateCrosshair()
+        local Center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        local Size = Config.Crosshair.Size
+        local Gap = Config.Crosshair.GapSize
+        local Angle = Config.Crosshair.Spin and tick() * Config.Crosshair.SpinSpeed or 0
+
+        CrosshairParts.Top.From = Center + Vector2.new(math.sin(Angle) * Gap, -math.cos(Angle) * Gap)
+        CrosshairParts.Top.To = Center + Vector2.new(math.sin(Angle) * (Gap + Size), -math.cos(Angle) * (Gap + Size))
+        CrosshairParts.Top.Thickness = Config.Crosshair.Thickness
+        CrosshairParts.Top.Color = Config.Crosshair.Color
+        CrosshairParts.Top.Visible = Config.Crosshair.Enabled
+
+        CrosshairParts.Bottom.From = Center + Vector2.new(-math.sin(Angle) * Gap, math.cos(Angle) * Gap)
+        CrosshairParts.Bottom.To = Center + Vector2.new(-math.sin(Angle) * (Gap + Size), math.cos(Angle) * (Gap + Size))
+        CrosshairParts.Bottom.Thickness = Config.Crosshair.Thickness
+        CrosshairParts.Bottom.Color = Config.Crosshair.Color
+        CrosshairParts.Bottom.Visible = Config.Crosshair.Enabled
+
+        CrosshairParts.Left.From = Center + Vector2.new(-math.cos(Angle) * Gap, -math.sin(Angle) * Gap)
+        CrosshairParts.Left.To = Center + Vector2.new(-math.cos(Angle) * (Gap + Size), -math.sin(Angle) * (Gap + Size))
+        CrosshairParts.Left.Thickness = Config.Crosshair.Thickness
+        CrosshairParts.Left.Color = Config.Crosshair.Color
+        CrosshairParts.Left.Visible = Config.Crosshair.Enabled
+
+        CrosshairParts.Right.From = Center + Vector2.new(math.cos(Angle) * Gap, math.sin(Angle) * Gap)
+        CrosshairParts.Right.To = Center + Vector2.new(math.cos(Angle) * (Gap + Size), math.sin(Angle) * (Gap + Size))
+        CrosshairParts.Right.Thickness = Config.Crosshair.Thickness
+        CrosshairParts.Right.Color = Config.Crosshair.Color
+        CrosshairParts.Right.Visible = Config.Crosshair.Enabled
+    end
+
+    CrosshairParts.Top = CreateCrosshairPart()
+    CrosshairParts.Bottom = CreateCrosshairPart()
+    CrosshairParts.Left = CreateCrosshairPart()
+    CrosshairParts.Right = CreateCrosshairPart()
+
+    ServiceConnections.UpdateCrosshair = RunService.RenderStepped:Connect(UpdateCrosshair)
 
     local CrosshairTab = Window:CreateTab("🔫 Crosshair", nil)
 
@@ -52,35 +54,40 @@ return function(Config, CrosshairParts, ServiceConnections)
         CurrentValue = Config.Crosshair.Enabled,
         Callback = function(Value)
             Config.Crosshair.Enabled = Value
-        end
-    })
-
-    CrosshairTab:CreateDropdown({
-        Name = "Crosshair Type",
-        Options = {"Mouse", "Center"},
-        CurrentOption = Config.Crosshair.Type == 1 and "Mouse" or "Center",
-        Callback = function(Option)
-            Config.Crosshair.Type = Option == "Mouse" and 1 or 2
+            UpdateCrosshair()
         end
     })
 
     CrosshairTab:CreateSlider({
-        Name = "Crosshair Size",
-        Range = {5, 20},
+        Name = "Size",
+        Range = {1, 20},
         Increment = 1,
         CurrentValue = Config.Crosshair.Size,
         Callback = function(Value)
             Config.Crosshair.Size = Value
+            UpdateCrosshair()
         end
     })
 
     CrosshairTab:CreateSlider({
-        Name = "Crosshair Thickness",
+        Name = "Thickness",
         Range = {1, 5},
         Increment = 1,
         CurrentValue = Config.Crosshair.Thickness,
         Callback = function(Value)
             Config.Crosshair.Thickness = Value
+            UpdateCrosshair()
+        end
+    })
+
+    CrosshairTab:CreateSlider({
+        Name = "Gap Size",
+        Range = {0, 10},
+        Increment = 1,
+        CurrentValue = Config.Crosshair.GapSize,
+        Callback = function(Value)
+            Config.Crosshair.GapSize = Value
+            UpdateCrosshair()
         end
     })
 
@@ -89,84 +96,31 @@ return function(Config, CrosshairParts, ServiceConnections)
         Color = Config.Crosshair.Color,
         Callback = function(Value)
             Config.Crosshair.Color = Value
-        end
-    })
-
-    CrosshairTab:CreateSlider({
-        Name = "Crosshair Transparency",
-        Range = {0, 1},
-        Increment = 0.1,
-        CurrentValue = Config.Crosshair.Transparency,
-        Callback = function(Value)
-            Config.Crosshair.Transparency = Value
-        end
-    })
-
-    CrosshairTab:CreateSlider({
-        Name = "Crosshair Gap Size",
-        Range = {0, 10},
-        Increment = 1,
-        CurrentValue = Config.Crosshair.GapSize,
-        Callback = function(Value)
-            Config.Crosshair.GapSize = Value
-        end
-    })
-
-    CrosshairTab:CreateSlider({
-        Name = "Crosshair Rotation",
-        Range = {0, 360},
-        Increment = 1,
-        CurrentValue = Config.Crosshair.Rotation,
-        Callback = function(Value)
-            Config.Crosshair.Rotation = Value
+            UpdateCrosshair()
         end
     })
 
     CrosshairTab:CreateToggle({
-        Name = "Center Dot",
-        CurrentValue = Config.Crosshair.CenterDot,
+        Name = "Spin",
+        CurrentValue = Config.Crosshair.Spin,
         Callback = function(Value)
-            Config.Crosshair.CenterDot = Value
-        end
-    })
-
-    CrosshairTab:CreateColorPicker({
-        Name = "Center Dot Color",
-        Color = Config.Crosshair.CenterDotColor,
-        Callback = function(Value)
-            Config.Crosshair.CenterDotColor = Value
+            Config.Crosshair.Spin = Value
+            UpdateCrosshair()
         end
     })
 
     CrosshairTab:CreateSlider({
-        Name = "Center Dot Size",
-        Range = {1, 5},
+        Name = "Spin Speed",
+        Range = {1, 10},
         Increment = 1,
-        CurrentValue = Config.Crosshair.CenterDotSize,
+        CurrentValue = Config.Crosshair.SpinSpeed,
         Callback = function(Value)
-            Config.Crosshair.CenterDotSize = Value
+            Config.Crosshair.SpinSpeed = Value
+            UpdateCrosshair()
         end
     })
 
-    CrosshairTab:CreateSlider({
-        Name = "Center Dot Transparency",
-        Range = {0, 1},
-        Increment = 0.1,
-        CurrentValue = Config.Crosshair.CenterDotTransparency,
-        Callback = function(Value)
-            Config.Crosshair.CenterDotTransparency = Value
-        end
-    })
-
-    CrosshairTab:CreateToggle({
-        Name = "Center Dot Filled",
-        CurrentValue = Config.Crosshair.CenterDotFilled,
-        Callback = function(Value)
-            Config.Crosshair.CenterDotFilled = Value
-        end
-    })
-
-    AddCrosshair()
+    UpdateCrosshair()
 
     return {
         CrosshairParts = CrosshairParts,
