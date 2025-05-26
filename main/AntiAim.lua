@@ -15,7 +15,7 @@ return function(Config, AntiAimConnection, Window)
                 if Root then
                     Root.CFrame = Root.CFrame * CFrame.Angles(
                         math.rad(Config.AntiAim.Pitch),
-                        math.rad(Config.AntiAim.Yaw),
+                        math.rad(Config.AniAim.Yaw),
                         math.rad(Config.AntiAim.Roll)
                     )
                 end
