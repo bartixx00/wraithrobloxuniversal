@@ -364,47 +364,49 @@ function ESPModule.CreateESP(Player)
             end
 
             -- HealthBar
-            if ESPModule.Config.ESP.HealthBar.Enabled then
-                local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position)
-                local LeftPosition = ESPModule.Camera.WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
-                local RightPosition = ESPModule.Camera.WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(-HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0)).Position)
-                PlayerTable.HealthBar.Main.Visible = OnScreen and ESPModule.Config.ESP.Enabled
-                PlayerTable.HealthBar.Outline.Visible = OnScreen and ESPModule.Config.ESP.HealthBar.Outline
-                if OnScreen then
-                    PlayerTable.HealthBar.Main.Thickness = ESPModule.Config.ESP.HealthBar.Thickness
-                    PlayerTable.HealthBar.Main.Color = ESPModule.GetColorFromHealthBar(Humanoid.Health, Humanoid.MaxHealth)
-                    PlayerTable.HealthBar.Main.Transparency = ESPModule.Config.ESP.HealthBar.Transparency
-                    PlayerTable.HealthBar.Main.Filled = true
-                    PlayerTable.HealthBar.Outline.Thickness = ESPModule.Config.ESP.HealthBar.OutlineThickness
-                    PlayerTable.HealthBar.Outline.Color = ESPModule.Config.ESP.HealthBar.OutlineColor
-                    PlayerTable.HealthBar.Outline.Transparency = ESPModule.Config.ESP.HealthBar.Transparency
-                    local Offset = ESPModule.Config.ESPModule.HealthBar.Offset
-                    if ESPModule.Config.ESP.HealthBar.Position == 1 then -- Top
-                        PlayerTable.HealthBar.Main.From = Vector2.new(Vector.X, Vector.Y - Offset)
-                        PlayerTable.HealthBar.Main.To = Vector2.new(Vector.X + (Humanoid.Health / Humanoid.MaxHealth) * 100, Vector.Y - Offset)
-                        PlayerTable.HealthBar.Outline.From = Vector2.new(Vector.X - 1, Vector.Y - Offset)
-                        PlayerTable.HealthBar.Outline.To = Vector2.new(Vector.X + 101, Vector.Y - Offset)
-                    elseif ESPModule.Config.ESP.HealthBar.Position == 2 then -- Bottom
-                        PlayerTable.HealthBar.Main.From = Vector2.new(Vector.X, Vector.Y + Size.Y + Offset)
-                        PlayerTable.HealthBar.Main.To = Vector2.new(Vector.X + (Humanoid.Health / Humanoid.MaxHealth) * 100, Vector.Y + Size.Y + Offset)
-                        PlayerTable.HealthBar.Outline.From = Vector2.new(Vector.X - 1, Vector.Y + Size.Y + Offset)
-                        PlayerTable.HealthBar.Outline.To = Vector2.new(Vector.X + 101, Vector.Y + Size.Y + Offset)
-                    elseif ESPModule.Config.ESP.HealthBar.Position == 3 then -- Left
-                        PlayerTable.HealthBar.Main.From = Vector2.new(LeftPosition.X - Offset, Vector.Y + Size.Y)
-                        PlayerTable.HealthBar.Main.To = Vector2.new(LeftPosition.X - Offset, Vector.Y - (Humanoid.Health / Humanoid.MaxHealth) * Size.Y)
-                        PlayerTable.HealthBar.Outline.From = Vector2.new(LeftPosition.X - Offset, Vector.Y + Size.Y + 1)
-                        PlayerTable.HealthBar.Outline.To = Vector2.new(LeftPosition.X - Offset, Vector.Y - Size.Y - 1)
-                    elseif ESPModule.Config.ESP.HealthBar.Position == 4 then -- Right
-                        PlayerTable.HealthBar.Main.From = Vector2.new(RightPosition.X + Offset, Vector.Y + Size.Y)
-                        PlayerTable.HealthBar.Main.To = Vector2.new(RightPosition.X + Offset, Vector.Y - (Humanoid.Health / Humanoid.MaxHealth) * Size.Y)
-                        PlayerTable.HealthBar.Outline.From = Vector2.new(RightPosition.X + Offset, Vector.Y + Size.Y + 1)
-                        PlayerTable.HealthBar.Outline.To = Vector2.new(RightPosition.X + Offset, Vector.Y - Size.Y - 1)
-                    end
-                end
-            else
-                PlayerTable.HealthBar.Main.Visible = false
-                PlayerTable.HealthBar.Outline.Visible = false
+if ESPModule.Config.ESP.HealthBar.Enabled then
+    local Vector, OnScreen = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.Position)
+    local LeftPosition = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
+    local RightPosition = ESPModule.Camera:WorldToViewportPoint(HumanoidRootPart.CFrame * CFrame.new(-HumanoidRootPart.Size.X, HumanoidRootPart.Size.Y / 2, 0).Position)
+    if PlayerTable.HealthBar.Main and PlayerTable.HealthBar.Outline then
+        PlayerTable.HealthBar.Main.Visible = OnScreen and ESPModule.Config.ESP.Enabled
+        PlayerTable.HealthBar.Outline.Visible = OnScreen and ESPModule.Config.ESP.HealthBar.Outline
+        if OnScreen then
+            PlayerTable.HealthBar.Main.Thickness = ESPModule.Config.ESP.HealthBar.Thickness or 1
+            PlayerTable.HealthBar.Main.Color = ESPModule.GetColorFromHealth(Humanoid.Health, Humanoid.MaxHealth)
+            PlayerTable.HealthBar.Main.Transparency = ESPModule.Config.ESP.HealthBar.Transparency or 1
+            PlayerTable.HealthBar.Main.Filled = true
+            PlayerTable.HealthBar.Outline.Thickness = ESPModule.Config.ESP.HealthBar.OutlineThickness or 2
+            PlayerTable.HealthBar.Outline.Color = ESPModule.Config.ESP.HealthBar.OutlineColor or Color3.fromRGB(0, 0, 0)
+            PlayerTable.HealthBar.Outline.Transparency = ESPModule.Config.ESP.HealthBar.Transparency or 1
+            local Offset = ESPModule.Config.ESP.HealthBar.Offset or 8
+            if ESPModule.Config.ESP.HealthBar.Position == 1 then -- Top
+                PlayerTable.HealthBar.Main.From = Vector2.new(Vector.X, Vector.Y - Offset)
+                PlayerTable.HealthBar.Main.To = Vector2.new(Vector.X + (Humanoid.Health / Humanoid.MaxHealth) * 100, Vector.Y - Offset)
+                PlayerTable.HealthBar.Outline.From = Vector2.new(Vector.X - 1, Vector.Y - Offset)
+                PlayerTable.HealthBar.Outline.To = Vector2.new(Vector.X + 101, Vector.Y - Offset)
+            elseif ESPModule.Config.ESP.HealthBar.Position == 2 then -- Bottom
+                PlayerTable.HealthBar.Main.From = Vector2.new(Vector.X, Vector.Y + Size.Y + Offset)
+                PlayerTable.HealthBar.Main.To = Vector2.new(Vector.X + (Humanoid.Health / Humanoid.MaxHealth) * 100, Vector.Y + Size.Y + Offset)
+                PlayerTable.HealthBar.Outline.From = Vector2.new(Vector.X - 1, Vector.Y + Size.Y + Offset)
+                PlayerTable.HealthBar.Outline.To = Vector2.new(Vector.X + 101, Vector.Y + Size.Y + Offset)
+            elseif ESPModule.Config.ESP.HealthBar.Position == 3 then -- Left
+                PlayerTable.HealthBar.Main.From = Vector2.new(LeftPosition.X - Offset, Vector.Y + Size.Y)
+                PlayerTable.HealthBar.Main.To = Vector2.new(LeftPosition.X - Offset, Vector.Y - (Humanoid.Health / Humanoid.MaxHealth) * Size.Y)
+                PlayerTable.HealthBar.Outline.From = Vector2.new(LeftPosition.X - Offset, Vector.Y + Size.Y + 1)
+                PlayerTable.HealthBar.Outline.To = Vector2.new(LeftPosition.X - Offset, Vector.Y - Size.Y - 1)
+            elseif ESPModule.Config.ESP.HealthBar.Position == 4 then -- Right
+                PlayerTable.HealthBar.Main.From = Vector2.new(RightPosition.X + Offset, Vector.Y + Size.Y)
+                PlayerTable.HealthBar.Main.To = Vector2.new(RightPosition.X + Offset, Vector.Y - (Humanoid.Health / Humanoid.MaxHealth) * Size.Y)
+                PlayerTable.HealthBar.Outline.From = Vector2.new(RightPosition.X + Offset, Vector.Y + Size.Y + 1)
+                PlayerTable.HealthBar.Outline.To = Vector2.new(RightPosition.X + Offset, Vector.Y - Size.Y - 1)
             end
+        end
+    end
+else
+    if PlayerTable.HealthBar.Main then PlayerTable.HealthBar.Main.Visible = false end
+    if PlayerTable.HealthBar.Outline then PlayerTable.HealthBar.Outline.Visible = false end
+end
 
             -- Chams
             if ESPModule.Config.ESP.Chams.Enabled then
