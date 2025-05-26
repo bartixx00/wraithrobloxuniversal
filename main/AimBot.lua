@@ -1,4 +1,3 @@
--- scripts/AimBot.lua
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -111,7 +110,98 @@ return function(Config, CurrentTarget, AimConnection, SilentAimTarget, FOVCircle
         end
     })
 
-    -- ... (reszta opcji UI dla AimBot, jak w oryginalnym skrypcie)
+    AimBotTab:CreateToggle({
+        Name = "Team Check",
+        CurrentValue = Config.AimBot.TeamCheck,
+        Callback = function(Value)
+            Config.AimBot.TeamCheck = Value
+        end
+    })
+
+    AimBotTab:CreateToggle({
+        Name = "Wall Check",
+        CurrentValue = Config.AimBot.WallCheck,
+        Callback = function(Value)
+            Config.AimBot.WallCheck = Value
+        end
+    })
+
+    AimBotTab:CreateToggle({
+        Name = "Silent Aim",
+        CurrentValue = Config.AimBot.SilentAim,
+        Callback = function(Value)
+            Config.AimBot.SilentAim = Value
+            if not Value then
+                SilentAimTarget = nil
+            end
+        end
+    })
+
+    AimBotTab:CreateToggle({
+        Name = "Prediction",
+        CurrentValue = Config.AimBot.Prediction,
+        Callback = function(Value)
+            Config.AimBot.Prediction = Value
+        end
+    })
+
+    AimBotTab:CreateSlider({
+        Name = "FOV Size",
+        Range = {10, 500},
+        Increment = 10,
+        CurrentValue = Config.AimBot.FOV,
+        Callback = function(Value)
+            Config.AimBot.FOV = Value
+            UpdateFOVCircle()
+        end
+    })
+
+    AimBotTab:CreateSlider({
+        Name = "Smoothness",
+        Range = {1, 20},
+        Increment = 1,
+        CurrentValue = Config.AimBot.Smoothness,
+        Callback = function(Value)
+            Config.AimBot.Smoothness = Value
+        end
+    })
+
+    AimBotTab:CreateSlider({
+        Name = "Prediction Factor",
+        Range = {0.1, 0.5},
+        Increment = 0.01,
+        CurrentValue = Config.AimBot.PredictionFactor,
+        Callback = function(Value)
+            Config.AimBot.PredictionFactor = Value
+        end
+    })
+
+    AimBotTab:CreateDropdown({
+        Name = "Target Bone",
+        Options = Config.AimBot.BoneSelection,
+        CurrentOption = Config.AimBot.CurrentBone,
+        Callback = function(Option)
+            Config.AimBot.CurrentBone = Option
+        end
+    })
+
+    AimBotTab:CreateToggle({
+        Name = "Show FOV Circle",
+        CurrentValue = Config.AimBot.FOVVisible,
+        Callback = function(Value)
+            Config.AimBot.FOVVisible = Value
+            UpdateFOVCircle()
+        end
+    })
+
+    AimBotTab:CreateColorPicker({
+        Name = "FOV Circle Color",
+        Color = Config.AimBot.FOVColor,
+        Callback = function(Value)
+            Config.AimBot.FOVColor = Value
+            UpdateFOVCircle()
+        end
+    })
 
     CreateFOVCircle()
     StartAimBot()
