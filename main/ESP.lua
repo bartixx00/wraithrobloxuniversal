@@ -1,4 +1,8 @@
 -- ESP Module (AirHub V2 Replica)
+-- Add Quad support for executors that don't support Drawing.new("Quad")
+if not pcall(function() return Drawing.new("Quad") end) then
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Custom-Quad-Render-Object/main.lua"))()
+end
 local ESPModule = {}
 
 -- Global Variables
